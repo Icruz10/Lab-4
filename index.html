@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Lab 4</title>
+
+         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+           crossorigin=""/>
+
+         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+           crossorigin=""></script>
+		   
+		  <script type="text/javascript" src="data.js"></script>
+		  
+		  <style type="text/css">
+  html, body { margin: 0; padding: 0; height: 100%; }
+  #map { min-height: 100%; }
+</style>
+		  
+		<style>
+			.legend {
+				padding: 6px 8px;
+				line-height: 18px;
+				background: rgba(255,255,255,0.9);
+				box-shadow: 0 0 15px rgba(0,0,0,0.2);
+				border-radius: 5px;
+					}
+
+			.legend i {
+				width: 18px;
+				height: 18px;
+				float: left;
+				margin-right: 8px;
+				opacity: 0.7; 
+					}
+			</style>
+		  
+
+    </head>
+
+    <body>
+			<h1>The City of Chicago</h1>
+				<h2>Population density based on the locaiton of Northeastern Illinois Univeristy</h2>
+        <div id="map" style="height: 500px"></div>
+
+        <script type="text/javascript">
+
+          var map = L.map('map', {
+              center: [41.88,-87.63],
+              zoom: 10
+          });
+
+         var B1 = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+	subdomains: 'abcd',
+	maxZoom: 20
+         }).addTo(map);
+		 
+		 var B2 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+}).addTo(map); 
+		
+		var chicago = L.geoJson(data, {style:style}).addTo(map);
+		
+		var geojsonFeature = {
+		"type": "Feature",
+			"properties": {
+			"name": "NEIU",
+			"amenity": "University",
+			"popupContent": "I go to class here!"
+    },
+    "geometry": {
+        "type": "Point",
+        "coordinates": [-87.7189,41.9795]
+    }
+};
+
+		var school = L.geoJSON(geojsonFeature).addTo(map);
+		
+	
+				
+			function getColor(value) {
+    return value > 8257  ? '#016c59':
+           value > 5368  ? '#1c9099':
+           value > 3852  ? '#67a9cf':
+           value > 1847  ? '#bdc9e1':
+                           '#f6eff7';
+			}
+		function style(feature){
+			return {
+				fillColor: getColor(feature.properties.PopDen),   // pop_den is the field name for the population density data
+				weight: 2,
+				opacity: 1,
+				color: 'white',
+				dashArray: '3',
+				fillOpacity: 0.9
+			};
+		}
+		 
+				function highlightFeature(e) {
+  
+		var feature = e.target;
+
+	
+		feature.setStyle({
+			weight: 5,
+			color: '#f6eff7',
+			fillOpacity: 0.7
+			});
+
+		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+			feature.bringToFront();
+		}
+}
+				var geojson;
+					function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+}
+				
+		
+
+						function onEachFeature(feature, layer) {
+						layer.on({
+								mouseover: highlightFeature,
+								mouseout: resetHighlight,    
+								   });
+}
+
+			var legend = L.control({position: 'bottomright'}); // Try the other three corners if you like.
+
+			legend.onAdd = function (map) {
+
+			    var div = L.DomUtil.create('div', 'legend'),
+			        grades = [0, 1847, 3852, 5368, 8257]; // The break values to define the intervals of population, note we begin from 0 here
+
+			    div.innerHTML = '<b>Population Density <br> Chicago<br></b>'; // The legend title (HTML-based), in this case it's Population Density 2011
+
+			    // Loop through our the classes and generate a label with a color box for each interval.
+			    // If you are creating a choropleth map, you DO NOT need to change lines below.
+			    for (var i = 0; i < grades.length; i++) {
+			        div.innerHTML +=
+			        '<i style="background:' + getColor(grades[i] + 1) + '"></i>' +
+			        grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+			    }
+
+			    return div;
+			};
+
+			legend.addTo(map);
+			
+				var basemaps = {
+					"B1": B1,
+					"B2": B2
+					};
+
+				var overlaymaps = {
+					"Chicago IL": chicago,
+					"NEIU": school
+					};
+	L.control.layers(basemaps, overlaymaps).addTo(map);
+			map.on('overlayremove', function(eventLayer){
+			if (eventLayer.name == 'Chicago IL'){ // We use the key/display name to refer to the layer
+			map.removeControl(legend); // legend is the variable name of the layer legend
+				}			
+				});
+
+				// Adding the legend when the layer is added
+				map.on('overlayadd', function(eventLayer){
+					if (eventLayer.name == 'Chicago IL'){
+				legend.addTo(map);
+					}
+});
+							
+
+		 
+
+        </script>
+   </body>
+</html>
